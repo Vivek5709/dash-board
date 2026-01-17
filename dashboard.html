@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Restaurant Dashboard</title>
+
+<!-- Font Awesome -->
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:system-ui, sans-serif;
+}
+
+html,body{
+  height:100%;
+  overflow:hidden;
+}
+
+body{
+  background:#111827;
+}
+
+/* ===== LAYOUT ===== */
+.dashboard{
+  height:100%;
+  display:grid;
+  grid-template-columns:240px 1fr;
+  grid-template-rows:64px 1fr;
+  gap:14px;
+  padding:14px;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+  grid-row:1/span 2;
+  background:#1F2933;
+  border-radius:14px;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.logo{
+  height:36px;
+  background:#F97316;
+  border-radius:8px;
+}
+
+.nav-btn{
+  height:40px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:#374151;
+  color:#fff;
+  text-decoration:none;
+  border-radius:10px;
+  padding:0 14px;
+  font-size:14px;
+}
+
+.nav-btn.active{
+  background:#F97316;
+  color:#111827;
+}
+
+.signout{
+  margin-top:auto;
+  background:#7F1D1D;
+}
+
+/* ===== TOPBAR ===== */
+.topbar{
+  background:#1F2933;
+  border-radius:14px;
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  padding:10px 16px;
+}
+
+.top-left{
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
+
+.page-title{
+  color:#F9FAFB;
+  font-weight:600;
+}
+
+.today-date{
+  color:#9CA3AF;
+  font-size:13px;
+}
+
+.theme-toggle{
+  width:46px;
+  height:24px;
+  background:#374151;
+  border-radius:999px;
+  position:relative;
+  cursor:pointer;
+}
+
+.toggle-circle{
+  width:18px;
+  height:18px;
+  background:#F9FAFB;
+  border-radius:50%;
+  position:absolute;
+  top:3px;
+  left:4px;
+  transition:0.3s;
+}
+
+/* ===== CONTENT ===== */
+.content{
+  height:100%;
+  display:grid;
+  grid-template-columns:2fr 1.2fr;
+  gap:14px;
+}
+
+.left{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+.card{
+  background:#F9FAFB;
+  border-radius:16px;
+  padding:16px;
+}
+
+/* ===== KPI CARD ===== */
+.stat-card{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.stat-top{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.stat-label{font-size:13px;color:#6B7280;}
+.stat-value{font-size:28px;font-weight:700;}
+.stat-bottom{font-size:12px;display:flex;gap:12px;}
+.today{color:#16A34A;}
+.trend{color:#6B7280;}
+
+/* ===== REVENUE CARD ===== */
+.revenue-card{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.revenue-title{
+  font-size:13px;
+  color:#6B7280;
+  font-weight:600;
+}
+
+.revenue-amount{
+  font-size:24px;
+  font-weight:700;
+  color:#111827;
+}
+
+.donut-wrap{
+  height:110px;
+}
+
+.legend{
+  display:flex;
+  gap:12px;
+  font-size:12px;
+  color:#6B7280;
+}
+
+.dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  display:inline-block;
+  margin-right:4px;
+}
+
+.cash{ background:#22C55E; }
+.upi{ background:#3B82F6; }
+.cardp{ background:#F97316; }
+
+/* ===== BIG GRAPH ===== */
+.big-card{
+  grid-column:1/span 2;
+  border-radius:20px;
+  padding:16px;
+  height:280px;
+}
+
+.chart-title{
+  font-size:14px;
+  font-weight:600;
+  color:#6B7280;
+  margin-bottom:6px;
+}
+
+.big-card canvas{
+  width:100%!important;
+  height:220px!important;
+}
+
+/* ===== RIGHT ===== */
+.right{
+  display:grid;
+  grid-template-rows:1fr 2fr;
+  gap:14px;
+}
+
+.list{
+  background:#F9FAFB;
+  border-radius:16px;
+  padding:12px;
+}
+
+.list-item{
+  height:30px;
+  background:#E5E7EB;
+  border-radius:8px;
+  margin-bottom:8px;
+}
+
+/* ===== LIGHT MODE ===== */
+body.light{
+  background:#F3F4F6;
+}
+
+body.light .sidebar,
+body.light .topbar{
+  background:#FFFFFF;
+  
+}
+
+body.light span{
+    color: rgb(43, 42, 42);
+}
+
+body.light .theme-toggle{
+  background:#F97316;
+}
+
+body.light .toggle-circle{
+  left:24px;
+}
+
+/* ===== ORDERS (NO THEME CHANGE) ===== */
+.orders-card{
+  background:#F9FAFB;
+  border-radius:16px;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.orders-title{
+  font-size:14px;
+  font-weight:600;
+  color:#6B7280;
+}
+
+.orders-head{
+  display:grid;
+  grid-template-columns:1fr 1.5fr 1fr auto;
+  font-size:11px;
+  font-weight:600;
+  color:#9CA3AF;
+  border-bottom:1px solid #E5E7EB;
+  padding-bottom:4px;
+}
+
+.order-row{
+  display:grid;
+  grid-template-columns:1fr 1.5fr 1fr auto;
+  align-items:center;
+  font-size:12px;
+}
+
+.order-id{ color:#374151; }
+.order-item{ color:#111827; }
+.order-amount{ font-weight:600; color:#111827; }
+
+/* simple text payment */
+.order-method{
+  position:relative;
+  font-size:12px;
+  color:#374151;
+  background-color: transparent;
+}
+
+
+/* hover UID */
+.upi-uid{
+  position:absolute;
+  bottom:120%;
+  left:50%;
+  transform:translateX(-50%);
+  background:#111827;
+  color:#fff;
+  font-size:10px;
+  padding:4px 6px;
+  border-radius:6px;
+  white-space:nowrap;
+  opacity:0;
+  pointer-events:none;
+  transition:0.2s ease;
+}
+
+/* show UID only on hover */
+.order-method.upi:hover .upi-uid{
+  opacity:1;
+}
+
+/* ===== WEEKLY SUMMARY ===== */
+.weekly-card{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.weekly-title{
+  font-size:13px;
+  font-weight:600;
+  color:#6B7280;
+}
+
+.weekly-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.weekly-item{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+
+.weekly-item .label{
+  font-size:12px;
+  color:#9CA3AF;
+}
+
+.weekly-item .value{
+  font-size:16px;
+  font-weight:700;
+  color:#111827;
+}
+
+.rev-row{
+  display:flex;
+  justify-content:space-between;
+  font-size:13px;
+  padding-top:2px;
+}
+
+.rev-row.expense{
+  color:#DC2626;
+  font-weight:600;
+}
+
+.rev-row.profit{
+  color:#16A34A;
+  font-weight:600;
+}
+
+.rev-row.net{
+  color:#15803D;
+  font-weight:700;
+  padding-top:6px;
+  border-top:1px dashed #E5E7EB;
+}
+
+.divider{
+  height:1px;
+  background:#E5E7EB;
+  margin:8px 0;
+}
+
+.top-item{
+  display:flex;
+  justify-content:space-between;
+  font-size:13px;
+  padding-top:4px;
+}
+
+.top-item strong{
+  color:#F97316; /* orange accent */
+}
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:system-ui, sans-serif;
+}
+
+html,body{
+  height:100%;
+  overflow:hidden;
+}
+
+/* ================= DARK MODE (DEFAULT) ================= */
+body{
+  background:#0F172A;
+  color:#E5E7EB;
+}
+
+/* ===== LAYOUT ===== */
+.dashboard{
+  height:100%;
+  display:grid;
+  grid-template-columns:240px 1fr;
+  grid-template-rows:64px 1fr;
+  gap:14px;
+  padding:14px;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+  grid-row:1/span 2;
+  background:#020617;
+  border-radius:14px;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.logo{
+  height:36px;
+  background:#F97316;
+  border-radius:8px;
+}
+
+.nav-btn{
+  height:40px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:#111827;
+  color:#E5E7EB;
+  text-decoration:none;
+  border-radius:10px;
+  padding:0 14px;
+  font-size:14px;
+}
+
+.nav-btn.active{
+  background:#F97316;
+  color:#020617;
+}
+
+.signout{
+  margin-top:auto;
+  background:#7F1D1D;
+}
+
+/* ===== TOPBAR ===== */
+.topbar{
+  background:#020617;
+  border-radius:14px;
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  padding:10px 16px;
+}
+
+.page-title{
+  color:#F9FAFB;
+  font-weight:600;
+}
+
+.today-date{
+  color:#94A3B8;
+  font-size:13px;
+}
+
+.theme-toggle{
+  width:46px;
+  height:24px;
+  background:#111827;
+  border-radius:999px;
+  position:relative;
+  cursor:pointer;
+}
+
+.toggle-circle{
+  width:18px;
+  height:18px;
+  background:#F9FAFB;
+  border-radius:50%;
+  position:absolute;
+  top:3px;
+  left:4px;
+  transition:0.3s;
+}
+
+/* ===== CONTENT ===== */
+.content{
+  height:100%;
+  display:grid;
+  grid-template-columns:2fr 1.2fr;
+  gap:14px;
+}
+
+.left{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+.card{
+  background:#F8FAFC;
+  color:#020617;
+  border-radius:16px;
+  padding:16px;
+}
+
+/* ===== KPI ===== */
+.stat-label,
+.revenue-title,
+.chart-title,
+.weekly-title,
+.orders-title{
+  font-size:13px;
+  color:#64748B;
+}
+
+.stat-value,
+.revenue-amount,
+.order-item,
+.order-amount,
+.weekly-item .value{
+  color:#020617;
+}
+
+/* ===== BIG GRAPH ===== */
+.big-card{
+  grid-column:1/span 2;
+  border-radius:20px;
+  padding:16px;
+  height:280px;
+  background:#F8FAFC;
+}
+
+/* ===== RIGHT ===== */
+.orders-card,
+.list{
+  background:#F8FAFC;
+  color:#020617;
+  border-radius:16px;
+  padding:14px;
+}
+
+/* ================= LIGHT MODE ================= */
+body.light{
+  background:#F1F5F9;
+  color:#020617;
+}
+
+body.light .sidebar,
+body.light .topbar{
+  background:#FFFFFF;
+}
+
+body.light .nav-btn{
+  background:#E5E7EB;
+  color:#020617;
+}
+
+body.light .nav-btn.active{
+  background:#F97316;
+  color:#FFFFFF;
+}
+
+body.light .card,
+body.light .orders-card,
+body.light .list,
+body.light .big-card{
+  background:#FFFFFF;
+  color:#020617;
+}
+
+body.light .stat-label,
+body.light .revenue-title,
+body.light .chart-title,
+body.light .weekly-title,
+body.light .orders-title,
+body.light .today-date{
+  color:#64748B;
+}
+
+body.light .toggle-circle{
+  left:24px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="dashboard">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <a class="nav-btn active" href="analytics.html">
+  <i class="fa-solid fa-chart-line"></i> Analytics
+</a>
+
+<a class="nav-btn" href="billing.html">
+  <i class="fa-solid fa-cash-register"></i> Billing
+</a>
+
+<a class="nav-btn" href="history.html">
+  <i class="fa-solid fa-clock"></i> History
+</a>
+
+<a class="nav-btn" href="branches.html">
+  <i class="fa-solid fa-store"></i> Branches
+</a>
+
+<a class="nav-btn" href="settings.html">
+  <i class="fa-solid fa-gear"></i> Settings
+</a>
+
+<a class="nav-btn signout" href="logout.html">
+  <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+</a>
+
+</aside>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="top-left">
+    <span class="page-title">Current Analytics</span>
+    <span class="today-date" id="todayDate"></span>
+  </div>
+  <div></div>
+  <div class="theme-toggle" id="themeToggle">
+    <span class="toggle-circle"></span>
+  </div>
+</header>
+
+<!-- CONTENT -->
+<main class="content">
+
+<section class="left">
+<div class="card stat-card">
+  <span class="stat-label">Total Customers</span>
+  <div class="stat-value">128</div>
+  <div class="stat-bottom">
+    <span class="today">+18 today</span>
+  </div>
+
+  <div class="divider"></div>
+
+  <span class="stat-label">Top Selling Items</span>
+
+  <div class="top-item">
+    <span>Biryani</span>
+    <strong>124</strong>
+  </div>
+  <div class="top-item">
+    <span>Dosa</span>
+    <strong>98</strong>
+  </div>
+  <div class="top-item">
+    <span>Burger</span>
+    <strong>76</strong>
+  </div>
+</div>
+
+<!-- TODAY REVENUE -->
+<div class="card revenue-card">
+  <div class="revenue-title">Today’s Revenue</div>
+  <div class="revenue-amount">₹67,890</div>
+
+  <div class="rev-row expense">
+    <span>Today’s Expense</span>
+    <span>₹42,300</span>
+  </div>
+
+  <div class="rev-row profit">
+    <span>Today’s Profit</span>
+    <span>₹67,890</span>
+  </div>
+
+  <div class="rev-row net">
+    <span>Net Profit</span>
+    <span>₹25,590</span>
+  </div>
+
+  <div class="donut-wrap">
+    <canvas id="paymentDonut"></canvas>
+  </div>
+
+  <div class="legend">
+    <span><i class="dot cash"></i> Cash</span>
+    <span><i class="dot upi"></i> UPI</span>
+    <span><i class="dot cardp"></i> Card</span>
+  </div>
+</div>
+
+<!-- CUSTOMER FLOW -->
+<div class="big-card">
+  <div class="chart-title">Customer Flow Today</div>
+  <canvas id="customersChart"></canvas>
+</div>
+
+</section>
+
+<section class="right">
+  
+<div class="card weekly-card">
+  <div class="weekly-title">This Week Summary</div>
+
+  <div class="weekly-grid">
+    <div class="weekly-item">
+      <span class="label">Customers</span>
+      <span class="value">4,280</span>
+    </div>
+
+    <div class="weekly-item">
+      <span class="label">Revenue</span>
+      <span class="value">₹2,45,600</span>
+    </div>
+
+    <div class="weekly-item">
+      <span class="label">Best Day</span>
+      <span class="value">Saturday</span>
+    </div>
+
+    <div class="weekly-item">
+      <span class="label">Avg / Day</span>
+      <span class="value">₹35,080</span>
+    </div>
+  </div>
+</div>
+
+
+ <div class="orders-card">
+  <div class="orders-title">Recent Orders</div>
+
+  <div class="orders-head">
+    <span>Order</span>
+    <span>Item</span>
+    <span>Payment</span>
+    <span>Amount</span>
+  </div>
+
+  <div class="order-row">
+    <span class="order-id">#A102</span>
+    <span class="order-item">Veg Burger</span>
+    <span class="ordered-method">
+      UPI
+      <span class="upi-uid">raj@upi</span>
+    </span>
+    <span class="order-amount">₹320</span>
+  </div>
+
+  <div class="order-row">
+    <span class="order-id">#A103</span>
+    <span class="order-item">Masala Dosa</span>
+    <span class="ordered-method">Cash</span>
+    <span class="order-amount">₹180</span>
+  </div>
+
+  <div class="order-row">
+    <span class="order-id">#A104</span>
+    <span class="order-item">Paneer Pizza</span>
+    <span class="ordered-method">Card</span>
+    <span class="order-amount">₹540</span>
+  </div>
+</div>
+
+</section>
+
+</main>
+</div>
+
+<script>
+
+  
+document.getElementById("todayDate").innerText =
+  new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
+
+document.getElementById("themeToggle").onclick =
+  ()=>document.body.classList.toggle("light");
+
+/* Date */
+document.getElementById("todayDate").innerText =
+  new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
+
+/* Theme */
+document.getElementById("themeToggle").onclick =
+  ()=>document.body.classList.toggle("light");
+
+/* LINE CHART */
+new Chart(document.getElementById("customersChart"),{
+  type:'line',
+  data:{
+    labels:['10 AM','11 AM','12 PM','1 PM','2 PM','3 PM','4 PM','5 PM','6 PM','7 PM','8 PM','9 PM'],
+    datasets:[{
+      data:[0,0,0,0,0,0,0,0,0,0,0,0],
+      borderColor:'#F97316',
+      backgroundColor:'rgba(249,115,22,0.15)',
+      fill:true,
+      tension:0.4
+    }]
+  },
+  options:{
+    responsive:true,
+    maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{display:true},
+      y:{display:true,beginAtZero:true}
+    }
+  }
+});
+
+/* DONUT CHART */
+new Chart(document.getElementById("paymentDonut"), {
+  type:'doughnut',
+  data:{
+    labels:['Cash','UPI','Card'],
+    datasets:[{
+      data:[460,2090,150],
+      backgroundColor:['#22C55E','#3B82F6','#F97316'],
+      borderWidth:0,
+      cutout:'65%'
+    }]
+  },
+  options:{
+    responsive:true,
+    maintainAspectRatio:false,
+    plugins:{legend:{display:false}}
+  }
+});
+
+
+document.querySelectorAll(".nav-btn").forEach(btn=>{
+  if(btn.href === location.href){
+    btn.classList.add("active");
+  }
+});
+</script>
+
+</body>
+</html>
